@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICreateUser) (error, *entites.Account) {
+func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICreateUser) (*entites.Account, error) {
 	// Initialize queries to interact with the database
 	ctx := context.Background()
 	queries := entites.New(*cfg.EntitesDBTX)
@@ -18,7 +18,7 @@ func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICr
 	// Validate if the user already exists
 	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: createUser.Email.String, Valid: true})
 	if error == nil {
-		return error, nil
+		return nil, fmt.Errorf("User with this email already exists")
 	}
 
 	// If the user does not exist, create a new user
@@ -29,7 +29,7 @@ func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICr
 			Image: pgtype.Text{String: user.Image.String, Valid: true},
 		})
 		if error != nil {
-			return error, nil
+			return nil, error
 		}
 
 		user = newUser
@@ -52,21 +52,21 @@ func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICr
 		Updatedat:             pgtype.Timestamptz{Valid: true},
 	})
 	if error != nil {
-		return error, nil
+		return nil, error
 	}
 
 	// Return the created account
-	return nil, &account
+	return &account, nil
 }
 
-func SignInWithEmailAndPassword(cfg *models.Configuration, email string, password string) (error, *entites.User, *entites.Session) {
+func SignInWithEmailAndPassword(cfg *models.Configuration, email string, password string) (*entites.User, *entites.Session, error) {
 	// Check if the user exists
 	ctx := context.Background()
 	queries := entites.New(*cfg.EntitesDBTX)
 
 	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: email, Valid: true})
 	if error != nil {
-		return error, nil, nil
+		return nil, nil, error
 	}
 
 	// Get the account associated with the user
@@ -75,12 +75,12 @@ func SignInWithEmailAndPassword(cfg *models.Configuration, email string, passwor
 		Userid:     user.ID,
 	})
 	if error != nil {
-		return error, nil, nil
+		return nil, nil, error
 	}
 
 	// Verify the password
 	if !utilities.CheckPasswordHash(password, account.Password.String) {
-		return fmt.Errorf("The credentials are invalid"), nil, nil
+		return nil, nil, fmt.Errorf("The credentials are invalid")
 	}
 
 	// Create the session for the user
@@ -96,11 +96,11 @@ func SignInWithEmailAndPassword(cfg *models.Configuration, email string, passwor
 		Updatedat: pgtype.Timestamptz{Valid: true},
 	})
 	if error != nil {
-		return error, nil, nil
+		return nil, nil, error
 	}
 
 	// Return the authenticated user
-	return nil, &user, &session
+	return &user, &session, nil
 }
 
 func ResetPasswordWithEmailAndPassword(cfg *models.Configuration, email string, oldPassword string, newPassword string) error {

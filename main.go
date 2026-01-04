@@ -10,11 +10,11 @@ func CreateConfiguration() *models.Configuration {
 	return &models.Configuration{}
 }
 
-func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICreateUser) (error, *entites.Account) {
+func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICreateUser) (*entites.Account, error) {
 	return providers.SignUpWithEmailAndPassword(cfg, createUser)
 }
 
-func SignInWithEmailAndPassword(cfg *models.Configuration, email string, password string) (error, *entites.User, *entites.Session) {
+func SignInWithEmailAndPassword(cfg *models.Configuration, email string, password string) (*entites.User, *entites.Session, error) {
 	return providers.SignInWithEmailAndPassword(cfg, email, password)
 }
 
@@ -22,14 +22,14 @@ func ResetPasswordWithEmailAndPassword(cfg *models.Configuration, email string, 
 	return providers.ResetPasswordWithEmailAndPassword(cfg, email, oldPassword, newPassword)
 }
 
-func SignUpWithMagicLink(cfg *models.Configuration, email string) (error, *entites.Account) {
+func SignUpWithMagicLink(cfg *models.Configuration, email string) (*entites.Account, error) {
 	return providers.SignUpWithMagicLink(cfg, email)
 }
 
-func SignInWithMagicLink(cfg *models.Configuration, email string, token string, expirationInSeconds int64) (error, *entites.Session) {
+func SignInWithMagicLink(cfg *models.Configuration, email string, token string, expirationInSeconds int64) (*entites.Session, error) {
 	return providers.SignInWithMagicLink(cfg, email, token, expirationInSeconds)
 }
 
-func ValidateMagicLinkSession(cfg *models.Configuration, token string) (error, *entites.Session) {
+func ValidateMagicLinkSession(cfg *models.Configuration, token string) (*entites.Session, error) {
 	return providers.ValidateMagicLinkSession(cfg, token)
 }

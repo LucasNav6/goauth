@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func SignUpWithMagicLink(cfg *models.Configuration, email string) (error, *entites.Account) {
+func SignUpWithMagicLink(cfg *models.Configuration, email string) (*entites.Account, error) {
 	// Initialize queries to interact with the database
 	ctx := context.Background()
 	queries := entites.New(*cfg.EntitesDBTX)
@@ -19,7 +19,7 @@ func SignUpWithMagicLink(cfg *models.Configuration, email string) (error, *entit
 	// Validate if the user already exists
 	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: email, Valid: true})
 	if error == nil {
-		return error, nil
+		return nil, error
 	}
 
 	// If the user does not exist, create a new user
@@ -30,7 +30,7 @@ func SignUpWithMagicLink(cfg *models.Configuration, email string) (error, *entit
 			Image: pgtype.Text{String: "", Valid: false},
 		})
 		if error != nil {
-			return error, nil
+			return nil, error
 		}
 
 		user = newUser
@@ -53,20 +53,20 @@ func SignUpWithMagicLink(cfg *models.Configuration, email string) (error, *entit
 		Updatedat:             pgtype.Timestamptz{Valid: true},
 	})
 	if error != nil {
-		return error, nil
+		return nil, error
 	}
 
-	return nil, &account
+	return &account, nil
 }
 
-func SignInWithMagicLink(cfg *models.Configuration, email string, token string, expirationInSeconds int64) (error, *entites.Session) {
+func SignInWithMagicLink(cfg *models.Configuration, email string, token string, expirationInSeconds int64) (*entites.Session, error) {
 	// Check if the user exists
 	ctx := context.Background()
 	queries := entites.New(*cfg.EntitesDBTX)
 
 	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: email, Valid: true})
 	if error != nil {
-		return error, nil
+		return nil, error
 	}
 
 	// Get the account associated with the user
@@ -75,11 +75,11 @@ func SignInWithMagicLink(cfg *models.Configuration, email string, token string, 
 		Userid:     user.ID,
 	})
 	if error != nil {
-		return error, nil
+		return nil, error
 	}
 
 	if account.ID == "" {
-		return fmt.Errorf("No MAGIC_LINK account found for this user"), nil
+		return nil, fmt.Errorf("No MAGIC_LINK account found for this user")
 	}
 
 	// Create a new session for the user (temporal)
@@ -95,20 +95,20 @@ func SignInWithMagicLink(cfg *models.Configuration, email string, token string, 
 		Updatedat: pgtype.Timestamptz{Valid: true},
 	})
 	if error != nil {
-		return error, nil
+		return nil, error
 	}
 
-	return nil, &session
+	return &session, nil
 }
 
-func ValidateMagicLinkSession(cfg *models.Configuration, token string) (error, *entites.Session) {
+func ValidateMagicLinkSession(cfg *models.Configuration, token string) (*entites.Session, error) {
 	// Check if the session exists
 	ctx := context.Background()
 	queries := entites.New(*cfg.EntitesDBTX)
 
 	session, error := queries.GetSessionByToken(ctx, token)
 	if error != nil {
-		return error, nil
+		return nil, error
 	}
 
 	// Update the session to be a permanent one
@@ -124,5 +124,5 @@ func ValidateMagicLinkSession(cfg *models.Configuration, token string) (error, *
 	})
 
 	// Return the session
-	return nil, &session
+	return &session, nil
 }

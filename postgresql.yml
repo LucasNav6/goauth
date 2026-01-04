@@ -1,0 +1,10 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "database/postgresql/query.sql"
+    schema: "database/postgresql/schema.sql"
+    gen:
+      go:
+        package: "entites"
+        out: "./models/entities"
+        sql_package: "pgx/v5"

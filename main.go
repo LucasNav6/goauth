@@ -10,8 +10,8 @@ func CreateConfiguration() *models.Configuration {
 	return &models.Configuration{}
 }
 
-func SignUpWithEmailAndPassword(cfg *models.Configuration, user entites.User, password string) (error, *entites.Account) {
-	return providers.SignUpWithEmailAndPassword(cfg, user, password)
+func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICreateUser) (error, *entites.Account) {
+	return providers.SignUpWithEmailAndPassword(cfg, createUser)
 }
 
 func SignInWithEmailAndPassword(cfg *models.Configuration, email string, password string) (error, *entites.User, *entites.Session) {
@@ -22,8 +22,8 @@ func ResetPasswordWithEmailAndPassword(cfg *models.Configuration, email string, 
 	return providers.ResetPasswordWithEmailAndPassword(cfg, email, oldPassword, newPassword)
 }
 
-func SignUpWithMagicLink(cfg *models.Configuration, user entites.User) (error, *entites.Account) {
-	return providers.SignUpWithMagicLink(cfg, user)
+func SignUpWithMagicLink(cfg *models.Configuration, email string) (error, *entites.Account) {
+	return providers.SignUpWithMagicLink(cfg, email)
 }
 
 func SignInWithMagicLink(cfg *models.Configuration, email string, token string, expirationInSeconds int64) (error, *entites.Session) {

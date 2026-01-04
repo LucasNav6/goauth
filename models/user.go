@@ -1,15 +1,10 @@
 package models
 
-type UserUnauthenticated struct {
-	Name     string
-	Email    string
-	Password string
-	Image    string `json:",omitempty"`
-}
+import "github.com/jackc/pgx/v5/pgtype"
 
-type UserAuthenticated struct {
-	ID    string
-	Name  string
-	Email string
-	Image string `json:",omitempty"`
+type ICreateUser struct {
+	Email    pgtype.Text
+	Name     pgtype.Text
+	Image    pgtype.Text
+	Password string
 }

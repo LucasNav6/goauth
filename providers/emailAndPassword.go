@@ -10,13 +10,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func SignUpWithEmailAndPassword(cfg *models.Configuration, user entites.User, password string) (error, *entites.Account) {
+func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICreateUser) (error, *entites.Account) {
 	// Initialize queries to interact with the database
 	ctx := context.Background()
 	queries := entites.New(*cfg.EntitesDBTX)
 
 	// Validate if the user already exists
-	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: user.Email.String, Valid: true})
+	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: createUser.Email.String, Valid: true})
 	if error == nil {
 		return error, nil
 	}
@@ -41,7 +41,7 @@ func SignUpWithEmailAndPassword(cfg *models.Configuration, user entites.User, pa
 		Userid:                user.ID,
 		Accountid:             utilities.GenerateUUID(),
 		Providerid:            models.EMAIL_AND_PASSWORD,
-		Password:              pgtype.Text{String: utilities.HashPassword(password), Valid: true},
+		Password:              pgtype.Text{String: utilities.HashPassword(createUser.Password), Valid: true},
 		Accesstoken:           pgtype.Text{Valid: false},
 		Refreshtoken:          pgtype.Text{Valid: false},
 		Accesstokenexpiresat:  pgtype.Timestamptz{Valid: false},

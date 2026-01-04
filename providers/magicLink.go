@@ -3,6 +3,7 @@ package providers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/LucasNav6/goauth/models"
 	entites "github.com/LucasNav6/goauth/models/entities"
@@ -10,13 +11,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func SignUpWithMagicLink(cfg *models.Configuration, user entites.User) (error, *entites.Account) {
+func SignUpWithMagicLink(cfg *models.Configuration, email string) (error, *entites.Account) {
 	// Initialize queries to interact with the database
 	ctx := context.Background()
 	queries := entites.New(*cfg.EntitesDBTX)
 
 	// Validate if the user already exists
-	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: user.Email.String, Valid: true})
+	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: email, Valid: true})
 	if error == nil {
 		return error, nil
 	}
@@ -24,9 +25,9 @@ func SignUpWithMagicLink(cfg *models.Configuration, user entites.User) (error, *
 	// If the user does not exist, create a new user
 	if user.ID == "" {
 		newUser, error := queries.CreateUser(ctx, entites.CreateUserParams{
-			Name:  pgtype.Text{String: user.Name.String, Valid: true},
-			Email: pgtype.Text{String: user.Email.String, Valid: true},
-			Image: pgtype.Text{String: user.Image.String, Valid: true},
+			Name:  pgtype.Text{String: strings.Split(email, "@")[0], Valid: true},
+			Email: pgtype.Text{String: email, Valid: true},
+			Image: pgtype.Text{String: "", Valid: false},
 		})
 		if error != nil {
 			return error, nil

@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -12,19 +11,15 @@ import (
 )
 
 func SignUpWithMagicLink(cfg *models.Configuration, email string) (*entites.Account, error) {
-	// Initialize queries to interact with the database
-	ctx := context.Background()
-	queries := entites.New(*cfg.EntitesDBTX)
-
 	// Validate if the user already exists
-	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: email, Valid: true})
+	user, error := cfg.Entites.GetUserByEmail(*cfg.Context, pgtype.Text{String: email, Valid: true})
 	if error == nil {
 		return nil, error
 	}
 
 	// If the user does not exist, create a new user
 	if user.ID == "" {
-		newUser, error := queries.CreateUser(ctx, entites.CreateUserParams{
+		newUser, error := cfg.Entites.CreateUser(*cfg.Context, entites.CreateUserParams{
 			Name:  pgtype.Text{String: strings.Split(email, "@")[0], Valid: true},
 			Email: pgtype.Text{String: email, Valid: true},
 			Image: pgtype.Text{String: "", Valid: false},
@@ -37,7 +32,7 @@ func SignUpWithMagicLink(cfg *models.Configuration, email string) (*entites.Acco
 	}
 
 	// Create the authentication record for the user (EMAIL_AND_PASSWORD)
-	account, error := queries.CreateAccount(ctx, entites.CreateAccountParams{
+	account, error := cfg.Entites.CreateAccount(*cfg.Context, entites.CreateAccountParams{
 		ID:                    utilities.GenerateUUID(),
 		Userid:                user.ID,
 		Accountid:             utilities.GenerateUUID(),
@@ -61,16 +56,13 @@ func SignUpWithMagicLink(cfg *models.Configuration, email string) (*entites.Acco
 
 func SignInWithMagicLink(cfg *models.Configuration, email string, token string, expirationInSeconds int64) (*entites.Session, error) {
 	// Check if the user exists
-	ctx := context.Background()
-	queries := entites.New(*cfg.EntitesDBTX)
-
-	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: email, Valid: true})
+	user, error := cfg.Entites.GetUserByEmail(*cfg.Context, pgtype.Text{String: email, Valid: true})
 	if error != nil {
 		return nil, error
 	}
 
 	// Get the account associated with the user
-	account, error := queries.GetAccountByProviderAndUserId(ctx, entites.GetAccountByProviderAndUserIdParams{
+	account, error := cfg.Entites.GetAccountByProviderAndUserId(*cfg.Context, entites.GetAccountByProviderAndUserIdParams{
 		Providerid: models.MAGIC_LINK,
 		Userid:     user.ID,
 	})
@@ -84,7 +76,7 @@ func SignInWithMagicLink(cfg *models.Configuration, email string, token string, 
 
 	// Create a new session for the user (temporal)
 	expiresAt := utilities.GetCurrentTimestampPlusSeconds(expirationInSeconds)
-	session, error := queries.CreateSession(ctx, entites.CreateSessionParams{
+	session, error := cfg.Entites.CreateSession(*cfg.Context, entites.CreateSessionParams{
 		ID:        utilities.GenerateUUID(),
 		Userid:    user.ID,
 		Token:     token,
@@ -102,18 +94,14 @@ func SignInWithMagicLink(cfg *models.Configuration, email string, token string, 
 }
 
 func ValidateMagicLinkSession(cfg *models.Configuration, token string) (*entites.Session, error) {
-	// Check if the session exists
-	ctx := context.Background()
-	queries := entites.New(*cfg.EntitesDBTX)
-
-	session, error := queries.GetSessionByToken(ctx, token)
+	session, error := cfg.Entites.GetSessionByToken(*cfg.Context, token)
 	if error != nil {
 		return nil, error
 	}
 
 	// Update the session to be a permanent one
 	expiresAt := utilities.GetCurrentTimestampPlusSeconds(cfg.SessionExpirationInSeconds)
-	error = queries.UpdateSession(ctx, entites.UpdateSessionParams{
+	error = cfg.Entites.UpdateSession(*cfg.Context, entites.UpdateSessionParams{
 		ID:        session.ID,
 		Userid:    session.Userid,
 		Token:     session.Token,

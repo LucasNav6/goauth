@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/LucasNav6/goauth/models"
@@ -11,19 +10,15 @@ import (
 )
 
 func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICreateUser) (*entites.Account, error) {
-	// Initialize queries to interact with the database
-	ctx := context.Background()
-	queries := entites.New(*cfg.EntitesDBTX)
-
 	// Validate if the user already exists
-	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: createUser.Email.String, Valid: true})
+	user, error := cfg.Entites.GetUserByEmail(*cfg.Context, pgtype.Text{String: createUser.Email.String, Valid: true})
 	if error == nil {
 		return nil, fmt.Errorf("User with this email already exists")
 	}
 
 	// If the user does not exist, create a new user
 	if user.ID == "" {
-		newUser, error := queries.CreateUser(ctx, entites.CreateUserParams{
+		newUser, error := cfg.Entites.CreateUser(*cfg.Context, entites.CreateUserParams{
 			Name:  pgtype.Text{String: user.Name.String, Valid: true},
 			Email: pgtype.Text{String: user.Email.String, Valid: true},
 			Image: pgtype.Text{String: user.Image.String, Valid: true},
@@ -36,7 +31,7 @@ func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICr
 	}
 
 	// Create the authentication record for the user (EMAIL_AND_PASSWORD)
-	account, error := queries.CreateAccount(ctx, entites.CreateAccountParams{
+	account, error := cfg.Entites.CreateAccount(*cfg.Context, entites.CreateAccountParams{
 		ID:                    utilities.GenerateUUID(),
 		Userid:                user.ID,
 		Accountid:             utilities.GenerateUUID(),
@@ -61,16 +56,13 @@ func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICr
 
 func SignInWithEmailAndPassword(cfg *models.Configuration, email string, password string) (*entites.User, *entites.Session, error) {
 	// Check if the user exists
-	ctx := context.Background()
-	queries := entites.New(*cfg.EntitesDBTX)
-
-	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: email, Valid: true})
+	user, error := cfg.Entites.GetUserByEmail(*cfg.Context, pgtype.Text{String: email, Valid: true})
 	if error != nil {
 		return nil, nil, error
 	}
 
 	// Get the account associated with the user
-	account, error := queries.GetAccountByProviderAndUserId(ctx, entites.GetAccountByProviderAndUserIdParams{
+	account, error := cfg.Entites.GetAccountByProviderAndUserId(*cfg.Context, entites.GetAccountByProviderAndUserIdParams{
 		Providerid: models.EMAIL_AND_PASSWORD,
 		Userid:     user.ID,
 	})
@@ -85,7 +77,7 @@ func SignInWithEmailAndPassword(cfg *models.Configuration, email string, passwor
 
 	// Create the session for the user
 	expiresAt := utilities.GetCurrentTimestampPlusSeconds(cfg.SessionExpirationInSeconds)
-	session, error := queries.CreateSession(ctx, entites.CreateSessionParams{
+	session, error := cfg.Entites.CreateSession(*cfg.Context, entites.CreateSessionParams{
 		ID:        utilities.GenerateUUID(),
 		Userid:    user.ID,
 		Token:     utilities.GenerateUUID(),
@@ -104,17 +96,13 @@ func SignInWithEmailAndPassword(cfg *models.Configuration, email string, passwor
 }
 
 func ResetPasswordWithEmailAndPassword(cfg *models.Configuration, email string, oldPassword string, newPassword string) error {
-	// Check if the user exists
-	ctx := context.Background()
-	queries := entites.New(*cfg.EntitesDBTX)
-
-	user, error := queries.GetUserByEmail(ctx, pgtype.Text{String: email, Valid: true})
+	user, error := cfg.Entites.GetUserByEmail(*cfg.Context, pgtype.Text{String: email, Valid: true})
 	if error != nil {
 		return error
 	}
 
 	// Get the account associated with the user
-	account, error := queries.GetAccountByProviderAndUserId(ctx, entites.GetAccountByProviderAndUserIdParams{
+	account, error := cfg.Entites.GetAccountByProviderAndUserId(*cfg.Context, entites.GetAccountByProviderAndUserIdParams{
 		Providerid: models.EMAIL_AND_PASSWORD,
 		Userid:     user.ID,
 	})
@@ -128,7 +116,7 @@ func ResetPasswordWithEmailAndPassword(cfg *models.Configuration, email string, 
 	}
 
 	// Update the password to the new password
-	error = queries.UpdateAccount(ctx, entites.UpdateAccountParams{
+	error = cfg.Entites.UpdateAccount(*cfg.Context, entites.UpdateAccountParams{
 		ID:                    account.ID,
 		Userid:                user.ID,
 		Accountid:             account.Accountid,

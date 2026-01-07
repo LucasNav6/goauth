@@ -1,13 +1,20 @@
 package goauth
 
 import (
+	"context"
+
 	"github.com/LucasNav6/goauth/models"
 	entites "github.com/LucasNav6/goauth/models/entities"
 	"github.com/LucasNav6/goauth/providers"
 )
 
-func CreateConfiguration() *models.Configuration {
-	return &models.Configuration{}
+func CreateConfiguration(entites *entites.Queries, context *context.Context, sessionExpirationInSeconds int64, sendEmailCallback func(to string, subject string, body string) error) *models.Configuration {
+	return &models.Configuration{
+		Entites:                    entites,
+		Context:                    context,
+		SessionExpirationInSeconds: sessionExpirationInSeconds,
+		SendEmailCallback:          sendEmailCallback,
+	}
 }
 
 func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICreateUser) (*entites.Account, error) {

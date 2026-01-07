@@ -20,9 +20,11 @@ func SignUpWithMagicLink(cfg *models.Configuration, email string) (*entites.Acco
 	// If the user does not exist, create a new user
 	if user.ID == "" {
 		newUser, error := cfg.Entites.CreateUser(*cfg.Context, entites.CreateUserParams{
-			Name:  pgtype.Text{String: strings.Split(email, "@")[0], Valid: true},
-			Email: pgtype.Text{String: email, Valid: true},
-			Image: pgtype.Text{String: "", Valid: false},
+			Name:      pgtype.Text{String: strings.Split(email, "@")[0], Valid: true},
+			Email:     pgtype.Text{String: email, Valid: true},
+			Image:     pgtype.Text{String: "", Valid: false},
+			Createdat: pgtype.Timestamptz{Valid: true},
+			Updatedat: pgtype.Timestamptz{Valid: true},
 		})
 		if error != nil {
 			return nil, error

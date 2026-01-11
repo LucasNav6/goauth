@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: query.sql
 
-package entites
+package goauth_entities
 
 import (
 	"context"

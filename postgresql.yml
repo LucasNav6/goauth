@@ -5,6 +5,6 @@ sql:
     schema: "database/postgresql/schema.sql"
     gen:
       go:
-        package: "entites"
-        out: "./models/entities"
+        package: "goauth_entities"
+        out: "./pkg/entities"
         sql_package: "pgx/v5"

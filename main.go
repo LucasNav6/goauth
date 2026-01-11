@@ -1,42 +1,64 @@
-package goauth
+package main
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
-	"github.com/LucasNav6/goauth/models"
-	entites "github.com/LucasNav6/goauth/models/entities"
-	"github.com/LucasNav6/goauth/providers"
+	goauth "github.com/LucasNav6/goauth/pkg"
+	goauth_entities "github.com/LucasNav6/goauth/pkg/entities"
+	goauth_models "github.com/LucasNav6/goauth/pkg/models"
+	goauth_providers "github.com/LucasNav6/goauth/pkg/providers"
+	"github.com/jackc/pgx/v5"
 )
 
-func CreateConfiguration(entites *entites.Queries, context *context.Context, sessionExpirationInSeconds int64, sendEmailCallback func(to string, subject string, body string) error) *models.Configuration {
-	return &models.Configuration{
-		Entites:                    entites,
-		Context:                    context,
-		SessionExpirationInSeconds: sessionExpirationInSeconds,
-		SendEmailCallback:          sendEmailCallback,
-	}
-}
+func main() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Connect to the database
+		ctx := context.Background()
+		conn, err := pgx.Connect(ctx, "postgresql://neondb_owner:npg_qmDEP9Ui8tfZ@ep-steep-paper-ac4c15ul-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer conn.Close(ctx)
 
-func SignUpWithEmailAndPassword(cfg *models.Configuration, createUser models.ICreateUser) (*entites.Account, error) {
-	return providers.SignUpWithEmailAndPassword(cfg, createUser)
-}
+		queries := goauth_entities.New(conn)
 
-func SignInWithEmailAndPassword(cfg *models.Configuration, email string, password string) (*entites.User, *entites.Session, error) {
-	return providers.SignInWithEmailAndPassword(cfg, email, password)
-}
+		// Setup GoAuth configuration and providers
+		goauthConfig := goauth.SetupConfiguration(queries, ctx, goauth_models.PasswordPolicy{
+			MinLength:           8,
+			RequireUppercase:    true,
+			RequireLowercase:    true,
+			RequireNumbers:      true,
+			RequireSpecialChars: true,
+		})
 
-func ResetPasswordWithEmailAndPassword(cfg *models.Configuration, email string, oldPassword string, newPassword string) error {
-	return providers.ResetPasswordWithEmailAndPassword(cfg, email, oldPassword, newPassword)
-}
+		// Setup the providers
+		goauthProvider := goauth.SetupProviders(
+			goauth_providers.EmailAndPassword(),
+		)
 
-func SignUpWithMagicLink(cfg *models.Configuration, email string) (*entites.Account, error) {
-	return providers.SignUpWithMagicLink(cfg, email)
-}
+		// Example of using a provider
+		emailAndPasswordProvider, err := goauth.UseProviders(goauthProvider, "email_and_password")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		password := "SecureP@ssw0rd"
+		res, err := emailAndPasswordProvider.SignUp(goauthConfig, &goauth_models.UserUnauthenticated{
+			Email:    "user@example.com",
+			Password: &password,
+			Name:     "Nombre",
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
-func SignInWithMagicLink(cfg *models.Configuration, email string, token string, expirationInSeconds int64) (*entites.Session, error) {
-	return providers.SignInWithMagicLink(cfg, email, token, expirationInSeconds)
-}
+		fmt.Fprintf(w, "User created: %+v", res)
+	})
 
-func ValidateMagicLinkSession(cfg *models.Configuration, token string) (*entites.Session, error) {
-	return providers.ValidateMagicLinkSession(cfg, token)
+	fmt.Println("Server initialize :1111")
+	http.ListenAndServe(":1111", nil)
 }

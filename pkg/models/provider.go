@@ -7,13 +7,13 @@ const (
 
 // Provider is the interface for an authentication provider
 type Provider interface {
-	GetName() string                                                         // Returns the name of the provider
-	SignUp(*Configuration, *UserUnauthenticated) (*UserAuthenticated, error) // Creates a new user
-	SignIn(*Configuration, *Credentials) (*Session, error)                   // Signs in an existing user
-	ResetPassword() (*UserAuthenticated, error)                              // Resets the user's password
-	RecoverPassword() (*UserAuthenticated, error)                            // Sends a password recovery email
-	ValidateEmail() (*UserAuthenticated, error)                              // Sends an email validation link
-	ValidateSession() (*Session, error)                                      // Validates an existing session
+	GetName() string
+	SignUp(config *Configuration, user *UserUnauthenticated) (*UserAuthenticated, error)
+	SignIn(config *Configuration, credentials *Credentials) (*Session, error)
+	RecoverPassword(config *Configuration, email string) error
+	ResetPassword(config *Configuration, email, token, newPassword string) error
+	ValidateEmail(config *Configuration, email, token string) error
+	ValidateSession(config *Configuration, token string) (*Session, error)
 }
 
 // ProviderConfig is the configuration for an authentication provider

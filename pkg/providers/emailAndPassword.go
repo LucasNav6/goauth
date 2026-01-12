@@ -23,23 +23,24 @@ func (e *emailAndPasswordProvider) SignIn(config *goauth_models.Configuration, c
 }
 
 // RecoverPassword implements [goauth_models.Provider].
-func (e *emailAndPasswordProvider) RecoverPassword() (*goauth_models.UserAuthenticated, error) {
-	panic("unimplemented")
+// Note: provider-level methods are thin wrappers; application code should pass required params.
+func (e *emailAndPasswordProvider) RecoverPassword(config *goauth_models.Configuration, email string) error {
+	return emailAndPassword.RecoverPassword(config, email)
 }
 
 // ResetPassword implements [goauth_models.Provider].
-func (e *emailAndPasswordProvider) ResetPassword() (*goauth_models.UserAuthenticated, error) {
-	panic("unimplemented")
+func (e *emailAndPasswordProvider) ResetPassword(config *goauth_models.Configuration, email string, token string, newPassword string) error {
+	return emailAndPassword.ResetPasswordWithToken(config, email, token, newPassword)
 }
 
 // ValidateEmail implements [goauth_models.Provider].
-func (e *emailAndPasswordProvider) ValidateEmail() (*goauth_models.UserAuthenticated, error) {
-	panic("unimplemented")
+func (e *emailAndPasswordProvider) ValidateEmail(config *goauth_models.Configuration, email string, token string) error {
+	return emailAndPassword.ValidateEmailWithToken(config, email, token)
 }
 
 // ValidateSession implements [goauth_models.Provider].
-func (e *emailAndPasswordProvider) ValidateSession() (*goauth_models.Session, error) {
-	panic("unimplemented")
+func (e *emailAndPasswordProvider) ValidateSession(config *goauth_models.Configuration, token string) (*goauth_models.Session, error) {
+	return emailAndPassword.ValidateSession(config, token)
 }
 
 func EmailAndPassword() goauth_models.Provider {

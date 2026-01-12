@@ -9,12 +9,14 @@ import (
 )
 
 // SetupConfiguration sets up the configuration for GoAuth
-func SetupConfiguration(entites *goauth_entities.Queries, ctx context.Context, passwordPolicy goauth_models.PasswordPolicy) *goauth_models.Configuration {
+func SetupConfiguration(secret string, entites *goauth_entities.Queries, ctx context.Context, passwordPolicy goauth_models.PasswordPolicy) *goauth_models.Configuration {
 	return &goauth_models.Configuration{
-		Entities:              entites,
-		Context:               &ctx,
-		PasswordPolicy:        &passwordPolicy,
-		AllowMultipleAccounts: true,
+		Secret:                   secret,
+		SessionDurationInSeconds: 3600,
+		Entities:                 entites,
+		Context:                  &ctx,
+		PasswordPolicy:           &passwordPolicy,
+		AllowMultipleAccounts:    true,
 	}
 }
 

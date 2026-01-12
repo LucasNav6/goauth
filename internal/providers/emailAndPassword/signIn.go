@@ -12,34 +12,33 @@ import (
 
 func SignIn(config *goauth_models.Configuration, credentials *goauth_models.Credentials) (*goauth_models.Session, error) {
 	// Check if user exists
-	userExist, err := user.GetUserByEmail(config, credentials.Email)
+	userExist, err := user.GetByEmail(config, credentials.Email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("The credentials are invalid - %v", err)
 	}
 	if userExist.Uuid == "" {
-		return nil, fmt.Errorf("user does not exist")
+		return nil, fmt.Errorf("The credentials are invalid - user not found")
 	}
 
 	// Get the account associated with the user
-	accountExist, err := account.GetAccountByUserIDAndProvider(config, userExist.Uuid, goauth_models.EMAIL_AND_PASSWORD)
+	accountExist, err := account.GetByUserAndProvider(config, userExist.Uuid, goauth_models.EMAIL_AND_PASSWORD)
 	if err != nil {
 		return nil, err
 	}
 	if accountExist == nil {
-		return nil, fmt.Errorf("the user does not have an email and password account")
+		return nil, fmt.Errorf("The credentials are invalid - account not found")
 	}
 
 	// Verify password
 	isPasswordValid := utilities.CheckPasswordHash(*credentials.Password, accountExist.Password)
-	if err != nil {
-		return nil, err
-	}
 	if !isPasswordValid {
-		return nil, fmt.Errorf("invalid password")
+		return nil, fmt.Errorf("The credentials are invalid - incorrect password")
 	}
 
-	// Create a session for the user
-	session, err := session.CreateSession(config, userExist.Uuid, *credentials.UserAgent, *credentials.IP)
+	// Create a session for the user. The returned session contains a token which
+	// server handlers should set as an HTTP-only cookie instead of returning it
+	// in a JSON body.
+	session, err := session.Create(config, userExist.Uuid, *credentials.UserAgent, *credentials.IP)
 	if err != nil {
 		return nil, err
 	}

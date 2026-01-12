@@ -36,13 +36,13 @@ func SignUp(config *goauth_models.Configuration, user *goauth_models.UserUnauthe
 	}
 
 	// Create a new user
-	newUser, err := commons.CreateUser(config, *user)
+	newUser, err := commons.Create(config, *user)
 	if err != nil {
 		return nil, fmt.Errorf("error creating user: %v", err)
 	}
 
 	// Create an account linked to the new user
-	_, err = account.CreateAccountWithEmailAndPassword(config, *user, newUser.Uuid)
+	_, err = account.CreateWithPassword(config, newUser.Uuid, *user.Password)
 	if err != nil {
 		return nil, fmt.Errorf("error creating account: %v", err)
 	}

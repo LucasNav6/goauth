@@ -8,15 +8,38 @@ import (
 	goauth_models "github.com/LucasNav6/goauth/pkg/models"
 )
 
-// SetupConfiguration sets up the configuration for GoAuth
-func SetupConfiguration(secret string, entites *goauth_entities.Queries, ctx context.Context, passwordPolicy goauth_models.PasswordPolicy) *goauth_models.Configuration {
-	return &goauth_models.Configuration{
-		Secret:                   secret,
-		SessionDurationInSeconds: 3600,
-		Entities:                 entites,
-		Context:                  &ctx,
-		PasswordPolicy:           &passwordPolicy,
-		AllowMultipleAccounts:    true,
+func SetupConfiguration(options ...func(*goauth_models.Configuration)) *goauth_models.Configuration {
+	cfg := &goauth_models.Configuration{}
+
+	for _, option := range options {
+		option(cfg)
+	}
+
+	return cfg
+}
+
+func SetupSecret(secret string) func(*goauth_models.Configuration) {
+	return func(cfg *goauth_models.Configuration) {
+		cfg.Secret = secret
+	}
+}
+
+func SetupDatabase(ctx context.Context, entities *goauth_entities.Queries) func(*goauth_models.Configuration) {
+	return func(cfg *goauth_models.Configuration) {
+		cfg.Context = &ctx
+		cfg.Entities = entities
+	}
+}
+
+func SetupSession(durationInSeconds int) func(*goauth_models.Configuration) {
+	return func(cfg *goauth_models.Configuration) {
+		cfg.SessionDurationInSeconds = int64(durationInSeconds)
+	}
+}
+
+func PasswordPolicy(policy *goauth_models.PasswordPolicy) func(*goauth_models.Configuration) {
+	return func(cfg *goauth_models.Configuration) {
+		cfg.PasswordPolicy = policy
 	}
 }
 

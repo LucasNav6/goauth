@@ -6,28 +6,39 @@ GoAuth is a minimalistic and highly customizable Go authentication library that 
 
 ## Instalation
 ```bash
-go get -u github.com/LucasNav6/goauth
+go get -u github.com/LucasNav6/goauth@vX.X.X
 ```
 ## Implement GoAuth in Your Project
 
-### Configure the GoAuth Providers
-First, you need to configure which providers are available in your project. This returns a standard `goauthCfg` object. It is not recommended to change this before setting up providers.
+### Goauth configuration
+First, you need to configure the GoAuth project. In this configuration, you define how the application will handle user management with different providers, including settings for cookies, session duration, validation requirements, and more.
 
 ```go
-goauthCfg := goauth.SetupProviders(
-    goauth.EmailAndPassword(),
-    goauth.MagicLink(),
-    // Other providers...
+import (
+    goauth "github.com/LucasNav6/goauth/pkg"
+    goauth_models "github.com/LucasNav6/goauth/pkg/models"
 )
-```
 
-### Use a GoAuth Provider
-Next, you can use only the providers that you configured in the previous step. If the specified provider does not exist, an error will be returned.
+goauthConfig := goauth.SetupConfiguration(
+    // Always required
+    goauth.SetupSecret("YOUR-SECURITY-SECRET")
+    goauth.SetupDatabase(context, queries)
+        
+    // Optional
+    goauth.SetupSession(
+        session_duration_in_second // Integer
+    )
 
-```go
-goauthProvider, err := goauth.UseProviders(goauthCfg, "email_and_password")
-if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-    return
-}
+    // Depending on the provider
+    // Email and password
+    goauth.PasswordPolicy(&goauth_models.PasswordPolicy{
+        MinLength           int
+        RequireUppercase    bool
+        RequireLowercase    bool
+        RequireNumbers      bool
+        RequireSpecialChars bool
+    })
+
+    // Other functions...
+)
 ```

@@ -14,10 +14,11 @@ func SignIn(config *goauth_models.Configuration, credentials *goauth_models.Cred
 	// Check if user exists
 	userExist, err := user.GetByEmail(config, credentials.Email)
 	if err != nil {
-		return nil, fmt.Errorf("The credentials are invalid - %v", err)
+		// Do not reveal whether the email exists
+		return nil, fmt.Errorf("The credentials provided are invalid")
 	}
 	if userExist.Uuid == "" {
-		return nil, fmt.Errorf("The credentials are invalid - user not found")
+		return nil, fmt.Errorf("The credentials provided are invalid")
 	}
 
 	// Get the account associated with the user
@@ -26,13 +27,14 @@ func SignIn(config *goauth_models.Configuration, credentials *goauth_models.Cred
 		return nil, err
 	}
 	if accountExist == nil {
-		return nil, fmt.Errorf("The credentials are invalid - account not found")
+		return nil, fmt.Errorf("The credentials provided are invalid")
 	}
 
 	// Verify password
 	isPasswordValid := utilities.CheckPasswordHash(*credentials.Password, accountExist.Password)
 	if !isPasswordValid {
-		return nil, fmt.Errorf("The credentials are invalid - incorrect password")
+		// Keep message generic to avoid confirming account existence
+		return nil, fmt.Errorf("The credentials provided are invalid")
 	}
 
 	// Create a session for the user. The returned session contains a token which

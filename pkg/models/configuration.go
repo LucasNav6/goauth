@@ -30,4 +30,7 @@ type Configuration struct {
 
 	// Account
 	AllowMultipleAccounts bool
+
+	// Email sender function: identifier (to), subject, body
+	EmailSender func(to string, subject string, body string) error
 }

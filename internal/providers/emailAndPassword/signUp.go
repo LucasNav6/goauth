@@ -12,8 +12,7 @@ import (
 func SignUp(config *goauth_models.Configuration, user *goauth_models.UserUnauthenticated) (*goauth_models.UserAuthenticated, error) {
 	// Validate user input (email, password)
 	if !utilities.IsValidEmail(user.Email) {
-		err := fmt.Errorf("invalid email format")
-		return nil, err
+		return nil, fmt.Errorf("The email provided is not valid")
 	}
 
 	// Validate password policy
@@ -26,25 +25,25 @@ func SignUp(config *goauth_models.Configuration, user *goauth_models.UserUnauthe
 			RequireSpecial: config.PasswordPolicy.RequireSpecialChars,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error validating password: %v", err)
+			return nil, fmt.Errorf("Failed to validate password: %v", err)
 		}
 		if !isValid {
-			return nil, fmt.Errorf("password does not meet the policy requirements")
+			return nil, fmt.Errorf("The password does not meet the policy requirements")
 		}
 	} else {
-		return nil, fmt.Errorf("password is required")
+		return nil, fmt.Errorf("The password is required")
 	}
 
 	// Create a new user
 	newUser, err := commons.Create(config, *user)
 	if err != nil {
-		return nil, fmt.Errorf("error creating user: %v", err)
+		return nil, fmt.Errorf("failed to create user")
 	}
 
 	// Create an account linked to the new user
 	_, err = account.CreateWithPassword(config, newUser.Uuid, *user.Password)
 	if err != nil {
-		return nil, fmt.Errorf("error creating account: %v", err)
+		return nil, fmt.Errorf("failed to create account")
 	}
 
 	return newUser, nil

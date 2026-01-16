@@ -43,6 +43,13 @@ func PasswordPolicy(policy *goauth_models.PasswordPolicy) func(*goauth_models.Co
 	}
 }
 
+// SetupEmailSender sets the email sending function used by providers.
+func SetupEmailSender(sender func(to string, subject string, body string) error) func(*goauth_models.Configuration) {
+	return func(cfg *goauth_models.Configuration) {
+		cfg.EmailSender = sender
+	}
+}
+
 // SetupProviders sets up the authentication providers
 func SetupProviders(providers ...goauth_models.Provider) *goauth_models.ProviderConfig {
 	return &goauth_models.ProviderConfig{Providers: providers}

@@ -13,16 +13,15 @@ import (
 // should be sent to the user's email and is not returned to the caller.
 func RecoverPassword(config *goauth_models.Configuration, email string) error {
 	if !utilities.IsValidEmail(email) {
-		return fmt.Errorf("invalid email")
+		return fmt.Errorf("The email provided is not valid")
 	}
 
-	// Ensure user exists
+	// Ensure user exists; do not reveal existence to caller. If user does not
+	// exist, act as if we succeeded to avoid account enumeration.
 	u, err := commonsUser.GetByEmail(config, email)
-	if err != nil {
-		return err
-	}
-	if u == nil || u.Uuid == "" {
-		return fmt.Errorf("user not found")
+	if err != nil || u == nil || u.Uuid == "" {
+		// swallow error and return nil for security: do not indicate existence
+		return nil
 	}
 
 	// Generate a verification value and persist it; do not expose token to caller.
@@ -33,6 +32,11 @@ func RecoverPassword(config *goauth_models.Configuration, email string) error {
 		return fmt.Errorf("failed to create verification: %v", err)
 	}
 
-	// In a real system we'd send the token by email. Here we do not return it.
+	// Send email if sender is configured
+	if config.EmailSender != nil {
+		subject := "Password recovery"
+		body := "Use the following token to reset your password: " + token
+		_ = config.EmailSender(email, subject, body)
+	}
 	return nil
 }
